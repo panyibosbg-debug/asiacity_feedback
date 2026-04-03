@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Feedback – Asia City</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
+  <style>
+    body { font-family: Arial; background:#0f0f0f; color:#fff; text-align:center; padding:40px 16px; margin:0; }
+    .container { max-width:600px; margin:auto; }
+    h1 { color:#ffcc00; }
+    p { color:#ddd; }
+    button { width:100%; max-width:420px; padding:16px; margin:10px auto; border:none; border-radius:50px; font-size:18px; cursor:pointer; display:block; }
+    .happy { background:#ffcc00; color:#000; }
+    .unhappy { background:#c62828; color:#fff; }
+    #feedbackForm { display:none; margin-top:20px; }
+    textarea { width:100%; height:120px; padding:12px; background:#222; color:#fff; border-radius:10px; border:1px solid #444; }
+    .message { margin-top:20px; color:#ffcc00; display:none; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>Ihr Feedback ist uns Gold wert</h1>
+  <p>Wie war Ihr Besuch bei uns?</p>
+
+  <button class="happy" onclick="happyClick()">👍 Sehr gut</button>
+  <button class="unhappy" onclick="unhappyClick()">👎 Nicht gut</button>
+
+  <div id="feedbackForm">
+    <p>Was können wir verbessern?</p>
+    <textarea id="message"></textarea>
+    <button onclick="sendFeedback()">Senden</button>
+  </div>
+
+  <div id="msg" class="message"></div>
+</div>
+
+<script>
+// 1. 确保只初始化一次，换个变量名避开冲突
+const SUPABASE_URL = "https://rfbklazetkqomxgscdtj.supabase.co";
+const SUPABASE_KEY = "sb_publishable_AU23TgEjTN62qXzLljpR0A_C43XikLw";
+
+// 使用 _supabase 避免与全局 window.supabase 冲突
+const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// 2. 修改 track 函数，增加错误日志输出
+async function track(type) {
+    console.log("正在尝试记录事件:", type);
+    const { error } = await _supabase.from("events").insert([{ type }]);
+    if (error) console.error("数据库记录失败:", error.message);
+}
+
+// 3. 满意点击
+async function happyClick() {
+    console.log("点击了满意");
+    // 不用 await，防止数据库卡顿导致不跳转
+    track("positive_click");
+
+    const msg = document.getElementById("msg");
+    msg.style.display = "block";
+    msg.innerText = "Danke! Weiterleitung zur Bewertung...";
+
+    setTimeout(() => {
+        window.location.href = "https://g.page/r/CeqBvFeF1eW9EBE/review";
+    }, 1200);
+}
+
+// 4. 不满意点击
+function unhappyClick() {
+    console.log("点击了不满意");
+    track("negative_click");
+    document.getElementById("feedbackForm").style.display = "block";
+}
+
+// 5. 发送详细反馈
+async function sendFeedback() {
+    const text = document.getElementById("message").value.trim();
+    if (!text) return alert("Bitte eingeben");
+
+    const { error } = await _supabase.from("feedback").insert([{ message: text }]);
+    
+    if (error) {
+        alert("发送失败: " + error.message);
+    } else {
+        track("feedback_sent");
+        document.getElementById("feedbackForm").style.display = "none";
+        const msg = document.getElementById("msg");
+        msg.style.display = "block";
+        msg.innerText = "Danke für Ihr Feedback!";
+    }
+}
+</script>
+
+</body>
+</html>
+
+<!-- ================= SUPABASE SETUP GUIDE ================= -->
+<!--
+1. Gehe auf https://supabase.com und erstelle ein Projekt
+
+2. Erstelle Tabellen:
+
+Tabelle: events
+- id (int, primary key, auto)
+- type (text)
+- created_at (timestamp, default now())
+
+Tabelle: feedback
+- id (int, primary key, auto)
+- message (text)
+- created_at (timestamp, default now())
+
+3. Row Level Security (RLS) deaktivieren ODER Policy setzen:
+
+Policy (einfach):
+Enable insert for everyone
+
+4. Ersetze im Code:
+- YOUR_PROJECT
+- YOUR_PUBLIC_ANON_KEY
+
+5. Fertig – kein Server nötig
+
+OPTIONAL:
+- Supabase Dashboard → Daten live sehen
+- später: Alerts / Emails / Analytics
+-->
