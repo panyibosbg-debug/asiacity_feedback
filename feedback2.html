@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Feedback – Asia City</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
+  <style>
+    :root {
+      --primary-gold: #ffcc00;
+      --error-red: #c62828;
+      --neutral-gray: #555;
+      --bg-dark: #0f0f0f;
+      --card-bg: #1a1a1a;
+      --input-bg: #252525;
+      --text-main: #fff;
+      --text-muted: #bbb;
+    }
+
+    body { 
+      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+      background: var(--bg-dark); 
+      color: var(--text-main); 
+      text-align: center; 
+      padding: 20px 16px; 
+      margin: 0; 
+      display: flex;
+      justify-content: center;
+      min-height: 100vh;
+    }
+
+    .container { width: 100%; max-width: 450px; margin: auto; }
+    
+    h1 { color: var(--primary-gold); margin-bottom: 8px; font-size: 26px; }
+    .subtitle { color: var(--text-muted); margin-bottom: 25px; font-size: 16px; }
+
+    /* --- 横向表情按钮布局 --- */
+    .emotion-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 25px;
+    }
+
+    .emotion-btn {
+      flex: 1;
+      background: var(--card-bg);
+      border: 2px solid #333;
+      border-radius: 16px;
+      padding: 15px 5px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .emotion-btn:active { transform: scale(0.95); }
+
+    .emotion-icon { font-size: 45px; margin-bottom: 8px; line-height: 1; }
+    .emotion-label { font-size: 13px; font-weight: bold; color: var(--text-main); }
+
+    /* 选中时的激活状态样式 */
+    .active-happy { border-color: var(--primary-gold) !important; background: rgba(255, 204, 0, 0.1) !important; }
+    .active-neutral { border-color: var(--neutral-gray) !important; background: rgba(85, 85, 85, 0.1) !important; }
+    .active-unhappy { border-color: var(--error-red) !important; background: rgba(198, 40, 40, 0.1) !important; }
+
+    /* --- 反馈表单 --- */
+    #feedbackForm { 
+      display: none; 
+      background: var(--card-bg); 
+      padding: 20px; 
+      border-radius: 16px; 
+      border: 1px solid #333;
+      margin-top: 10px;
+    }
+
+    #feedbackTitle { font-weight: bold; margin-bottom: 15px; font-size: 16px; }
+
+    /* 星级评分 */
+    .star-rating {
+      font-size: 38px;
+      margin-bottom: 15px;
+      color: var(--primary-gold);
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+    }
+    .star { cursor: pointer; user-select: none; }
+
+    /* 输入框通用样式 */
+    textarea, .email-input { 
+      width: 100%; 
+      padding: 14px; 
+      background: var(--input-bg); 
+      color: #fff; 
+      border-radius: 10px; 
+      border: 1px solid #444; 
+      box-sizing: border-box;
+      font-size: 15px;
+      margin-top: 10px;
+      display: block;
+    }
+    textarea { height: 100px; resize: none; }
+    .email-input { margin-bottom: 5px; }
+
+    .submit-btn { 
+      background: var(--primary-gold); 
+      color: #000; 
+      width: 100%;
+      padding: 16px;
+      border: none;
+      border-radius: 12px;
+      font-size: 17px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+    .submit-btn:disabled { opacity: 0.5; }
+
+    .message { margin-top: 30px; color: var(--primary-gold); font-size: 18px; display: none; font-weight: bold; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>Ihr Feedback ist uns Gold wert</h1>
+  <p class="subtitle">Wie war Ihr Besuch bei uns?</p>
+
+  <div class="emotion-row" id="mainOptions">
+    <div class="emotion-btn" id="btnHappy" onclick="happyClick()">
+      <div class="emotion-icon">😊</div>
+      <div class="emotion-label">Sehr gut</div>
+    </div>
+    <div class="emotion-btn" id="btnNeutral" onclick="neutralClick()">
+      <div class="emotion-icon">😐</div>
+      <div class="emotion-label">Na ja</div>
+    </div>
+    <div class="emotion-btn" id="btnUnhappy" onclick="unhappyClick()">
+      <div class="emotion-icon">😞</div>
+      <div class="emotion-label">Nicht gut</div>
+    </div>
+  </div>
+
+  <div id="feedbackForm">
+    <p id="feedbackTitle">Was können wir verbessern?</p>
+    
+    <div class="star-rating">
+      <span class="star" onclick="setRating(1)">☆</span>
+      <span class="star" onclick="setRating(2)">☆</span>
+      <span class="star" onclick="setRating(3)">☆</span>
+      <span class="star" onclick="setRating(4)">☆</span>
+      <span class="star" onclick="setRating(5)">☆</span>
+    </div>
+
+    <textarea id="message" placeholder="Ihre Nachricht (optional)"></textarea>
+    
+    <input type="email" id="userEmail" class="email-input" placeholder="Ihre E-Mail für Rückfragen (optional)">
+    
+    <button id="submitBtn" class="submit-btn" onclick="sendFeedback()">Feedback senden</button>
+  </div>
+
+  <div id="msg" class="message"></div>
+</div>
+
+<script>
+// --- Supabase 初始化 ---
+const SUPABASE_URL = "https://rfbklazetkqomxgscdtj.supabase.co";
+const SUPABASE_KEY = "sb_publishable_AU23TgEjTN62qXzLljpR0A_C43XikLw"; 
+const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let currentRating = 0;
+
+// --- 逻辑函数 ---
+
+async function track(type) {
+    await _supabase.from("events").insert([{ type }]);
+}
+
+function setRating(n) {
+    currentRating = n;
+    const stars = document.querySelectorAll('.star');
+    stars.forEach((star, index) => {
+        star.innerText = (index < n) ? "★" : "☆";
+    });
+}
+
+function resetButtons() {
+    document.getElementById('btnHappy').classList.remove('active-happy');
+    document.getElementById('btnNeutral').classList.remove('active-neutral');
+    document.getElementById('btnUnhappy').classList.remove('active-unhappy');
+}
+
+// 1. 非常满意
+async function happyClick() {
+    track("positive_click");
+    resetButtons();
+    document.getElementById('btnHappy').classList.add('active-happy');
+    document.getElementById("feedbackForm").style.display = "none";
+    
+    const msg = document.getElementById("msg");
+    msg.style.display = "block";
+    msg.innerText = "Danke! Weiterleitung zu Google...";
+    
+    setTimeout(() => {
+        window.location.href = "https://g.page/r/CeqBvFeF1eW9EBE/review";
+    }, 1200);
+}
+
+// 2. 一般般
+function neutralClick() {
+    track("neutral_click");
+    resetButtons();
+    document.getElementById('btnNeutral').classList.add('active-neutral');
+    openForm("Was hat Ihnen heute gefehlt?");
+}
+
+// 3. 不太好
+function unhappyClick() {
+    track("negative_click");
+    resetButtons();
+    document.getElementById('btnUnhappy').classList.add('active-unhappy');
+    openForm("Es tut uns leid. Was war nicht gut?");
+}
+
+function openForm(title) {
+    document.getElementById("msg").style.display = "none";
+    document.getElementById("feedbackTitle").innerText = title;
+    document.getElementById("feedbackForm").style.display = "block";
+    setRating(0);
+    // 自动平滑滚动到表单
+    setTimeout(() => {
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    }, 100);
+}
+
+// --- 提交反馈到 Supabase ---
+async function sendFeedback() {
+    const message = document.getElementById("message").value.trim();
+    const email = document.getElementById("userEmail").value.trim();
+    const btn = document.getElementById("submitBtn");
+
+    if (currentRating === 0 && !message) {
+        alert("Bitte wählen Sie Sterne oder schreiben Sie uns.");
+        return;
+    }
+
+    btn.disabled = true;
+    btn.innerText = "Wird gesendet...";
+
+    const { error } = await _supabase.from("feedback").insert([
+        { 
+            rating: currentRating, 
+            message: message, 
+            email: email 
+        }
+    ]);
+
+    if (error) {
+        alert("Fehler: " + error.message);
+        btn.disabled = false;
+        btn.innerText = "Feedback senden";
+    } else {
+        track("feedback_submitted");
+        document.getElementById("feedbackForm").style.display = "none";
+        document.getElementById("mainOptions").style.display = "none";
+        document.querySelector(".subtitle").style.display = "none";
+        
+        const msg = document.getElementById("msg");
+        msg.style.display = "block";
+        msg.innerText = "Vielen Dank! Ihr Feedback wurde sicher gespeichert.";
+    }
+}
+</script>
+
+</body>
+</html>
