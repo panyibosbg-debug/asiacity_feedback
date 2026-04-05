@@ -33,6 +33,14 @@
 
     .container { width: 100%; max-width: 450px; margin: auto; }
     
+    /* 新增 Logo 样式 */
+    .logo {
+    width: 120px;       /* 宽度可以根据实际效果调整 */
+    height: auto;
+    margin-bottom: 20px; /* 与标题保持距离 */
+    border-radius: 50%;  /* 如果你的图片本身不是圆形但想显示为圆形可以加这句 */
+    }
+    
     h1 { color: var(--primary-gold); margin-bottom: 8px; font-size: 26px; }
     .subtitle { color: var(--text-muted); margin-bottom: 25px; font-size: 16px; }
 
@@ -126,6 +134,8 @@
 <body>
 
 <div class="container">
+  <img src="asia-city-logo.png" alt="Asia City Logo" class="logo">
+
   <h1>Ihr Feedback ist uns Gold wert</h1>
   <p class="subtitle">Wie war Ihr Besuch bei uns?</p>
 
