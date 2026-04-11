@@ -181,13 +181,19 @@ const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let currentRating = 0;
 
 /**
- * 记录事件到 events 表
+ * 记录事件到 events 表，并带错误反馈
  */
 async function trackEvent(eventType) {
-    try {
-        await _supabase.from("events").insert([{ type: eventType }]);
-    } catch (e) {
-        console.error("Tracking Error:", e);
+    console.log("Attempting to track:", eventType);
+    const { data, error } = await _supabase.from("events").insert([{ type: eventType }]);
+    
+    if (error) {
+        console.error("Supabase Error Details:", error);
+        // 如果是因为权限或表不存在，这里会弹窗
+        // 调试完可以把这行删除
+        alert("Datenbank Fehler: " + error.message); 
+    } else {
+        console.log("Track success:", eventType);
     }
 }
 
