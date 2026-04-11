@@ -205,7 +205,10 @@ function resetButtons() {
 
 // 1. 非常满意
 async function happyClick() {
-    track("positive_click");
+    // 1. 记录到数据库的 events 表 (这一步会触发后端的 Webhook)
+    await _supabase.from("events").insert([{ type: "positive_click" }]);
+
+    // 2. 界面反馈
     resetButtons();
     document.getElementById('btnHappy').classList.add('active-happy');
     document.getElementById("feedbackForm").style.display = "none";
@@ -214,11 +217,11 @@ async function happyClick() {
     msg.style.display = "block";
     msg.innerText = "Danke! Weiterleitung zu Google...";
     
+    // 3. 延迟跳转
     setTimeout(() => {
         window.location.href = "https://g.page/r/CeqBvFeF1eW9EBE/review";
     }, 1200);
 }
-
 // 2. 一般般
 function neutralClick() {
     track("neutral_click");
