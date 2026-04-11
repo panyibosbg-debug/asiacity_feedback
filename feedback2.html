@@ -33,18 +33,17 @@
 
     .container { width: 100%; max-width: 450px; margin: auto; }
     
-    /* 新增 Logo 样式 */
     .logo {
-    width: 120px;       /* 宽度可以根据实际效果调整 */
-    height: auto;
-    margin-bottom: 20px; /* 与标题保持距离 */
-    border-radius: 50%;  /* 如果你的图片本身不是圆形但想显示为圆形可以加这句 */
+      width: 120px;
+      height: auto;
+      margin-bottom: 20px;
+      border-radius: 50%;
     }
     
     h1 { color: var(--primary-gold); margin-bottom: 8px; font-size: 26px; }
     .subtitle { color: var(--text-muted); margin-bottom: 25px; font-size: 16px; }
 
-    /* --- 横向表情按钮布局 --- */
+    /* 表情按钮布局 */
     .emotion-row {
       display: flex;
       justify-content: space-between;
@@ -70,12 +69,12 @@
     .emotion-icon { font-size: 45px; margin-bottom: 8px; line-height: 1; }
     .emotion-label { font-size: 13px; font-weight: bold; color: var(--text-main); }
 
-    /* 选中时的激活状态样式 */
+    /* 激活状态样式 */
     .active-happy { border-color: var(--primary-gold) !important; background: rgba(255, 204, 0, 0.1) !important; }
     .active-neutral { border-color: var(--neutral-gray) !important; background: rgba(85, 85, 85, 0.1) !important; }
     .active-unhappy { border-color: var(--error-red) !important; background: rgba(198, 40, 40, 0.1) !important; }
 
-    /* --- 反馈表单 --- */
+    /* 反馈表单 */
     #feedbackForm { 
       display: none; 
       background: var(--card-bg); 
@@ -87,7 +86,6 @@
 
     #feedbackTitle { font-weight: bold; margin-bottom: 15px; font-size: 16px; }
 
-    /* 星级评分 */
     .star-rating {
       font-size: 38px;
       margin-bottom: 15px;
@@ -98,7 +96,6 @@
     }
     .star { cursor: pointer; user-select: none; }
 
-    /* 输入框通用样式 */
     textarea, .email-input { 
       width: 100%; 
       padding: 14px; 
@@ -176,19 +173,25 @@
 </div>
 
 <script>
-// --- Supabase 初始化 ---
+// --- Supabase 配置 ---
 const SUPABASE_URL = "https://rfbklazetkqomxgscdtj.supabase.co";
 const SUPABASE_KEY = "sb_publishable_AU23TgEjTN62qXzLljpR0A_C43XikLw"; 
 const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let currentRating = 0;
 
-// --- 逻辑函数 ---
-
-async function track(type) {
-    await _supabase.from("events").insert([{ type }]);
+/**
+ * 记录事件到 events 表
+ */
+async function trackEvent(eventType) {
+    try {
+        await _supabase.from("events").insert([{ type: eventType }]);
+    } catch (e) {
+        console.error("Tracking Error:", e);
+    }
 }
 
+// 星级设置
 function setRating(n) {
     currentRating = n;
     const stars = document.querySelectorAll('.star');
@@ -197,18 +200,20 @@ function setRating(n) {
     });
 }
 
+// 重置按钮样式
 function resetButtons() {
     document.getElementById('btnHappy').classList.remove('active-happy');
     document.getElementById('btnNeutral').classList.remove('active-neutral');
     document.getElementById('btnUnhappy').classList.remove('active-unhappy');
 }
 
-// 1. 非常满意
-async function happyClick() {
-    // 1. 记录到数据库的 events 表 (这一步会触发后端的 Webhook)
-    await _supabase.from("events").insert([{ type: "positive_click" }]);
+// --- 点击事件 ---
 
-    // 2. 界面反馈
+// 1. 非常满意 (好评)
+async function happyClick() {
+    // 记录点击
+    await trackEvent("positive_click");
+
     resetButtons();
     document.getElementById('btnHappy').classList.add('active-happy');
     document.getElementById("feedbackForm").style.display = "none";
@@ -217,39 +222,45 @@ async function happyClick() {
     msg.style.display = "block";
     msg.innerText = "Danke! Weiterleitung zu Google...";
     
-    // 3. 延迟跳转
+    // 跳转到 Google 评论页
     setTimeout(() => {
         window.location.href = "https://g.page/r/CeqBvFeF1eW9EBE/review";
-    }, 1200);
+    }, 1000);
 }
+
 // 2. 一般般
-function neutralClick() {
-    track("neutral_click");
+async function neutralClick() {
+    // 记录点击
+    await trackEvent("neutral_click");
+
     resetButtons();
     document.getElementById('btnNeutral').classList.add('active-neutral');
     openForm("Was hat Ihnen heute gefehlt?");
 }
 
 // 3. 不太好
-function unhappyClick() {
-    track("negative_click");
+async function unhappyClick() {
+    // 记录点击
+    await trackEvent("negative_click");
+
     resetButtons();
     document.getElementById('btnUnhappy').classList.add('active-unhappy');
     openForm("Es tut uns leid. Was war nicht gut?");
 }
 
+// 打开内部反馈表单
 function openForm(title) {
     document.getElementById("msg").style.display = "none";
     document.getElementById("feedbackTitle").innerText = title;
     document.getElementById("feedbackForm").style.display = "block";
     setRating(0);
-    // 自动平滑滚动到表单
+    
     setTimeout(() => {
         window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
     }, 100);
 }
 
-// --- 提交反馈到 Supabase ---
+// --- 提交详细反馈 ---
 async function sendFeedback() {
     const message = document.getElementById("message").value.trim();
     const email = document.getElementById("userEmail").value.trim();
@@ -263,6 +274,7 @@ async function sendFeedback() {
     btn.disabled = true;
     btn.innerText = "Wird gesendet...";
 
+    // 1. 存入 feedback 表
     const { error } = await _supabase.from("feedback").insert([
         { 
             rating: currentRating, 
@@ -276,7 +288,10 @@ async function sendFeedback() {
         btn.disabled = false;
         btn.innerText = "Feedback senden";
     } else {
-        track("feedback_submitted");
+        // 2. 存入成功后，在 events 表记录一次“完成提交”
+        await trackEvent("feedback_form_submitted");
+
+        // 3. 隐藏所有控件，显示感谢语
         document.getElementById("feedbackForm").style.display = "none";
         document.getElementById("mainOptions").style.display = "none";
         document.querySelector(".subtitle").style.display = "none";
