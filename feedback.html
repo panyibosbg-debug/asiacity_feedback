@@ -6,22 +6,24 @@
   <title>Feedback – Asia City</title>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
   <style>
     :root {
       --primary-gold: #ffcc00;
+      --primary-gold-dark: #b38f00;
       --error-red: #c62828;
       --neutral-gray: #555;
       --bg-dark: #0f0f0f;
-      --card-bg: #1a1a1a;
-      --input-bg: #252525;
-      --text-main: #fff;
-      --text-muted: #bbb;
+      --card-bg: #1e1e1e;
+      --input-bg: #121212;
+      --text-main: #ffffff;
+      --text-muted: #999;
     }
 
     body { 
       font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
-      background: var(--bg-dark); 
+      background: radial-gradient(circle at center, #1a1a1a 0%, #0a0a0a 100%); 
       color: var(--text-main); 
       text-align: center; 
       padding: 20px 16px; 
@@ -34,98 +36,160 @@
     .container { width: 100%; max-width: 450px; margin: auto; }
     
     .logo {
-      width: 120px;
+      width: 110px;
       height: auto;
       margin-bottom: 20px;
       border-radius: 50%;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+      border: 3px solid #222;
     }
     
-    h1 { color: var(--primary-gold); margin-bottom: 8px; font-size: 26px; }
-    .subtitle { color: var(--text-muted); margin-bottom: 25px; font-size: 16px; }
+    h1 { color: var(--primary-gold); margin-bottom: 8px; font-size: 26px; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+    .subtitle { color: var(--text-muted); margin-bottom: 30px; font-size: 16px; }
 
-    /* 表情按钮布局 */
+    /* 立体表情按钮 */
     .emotion-row {
       display: flex;
       justify-content: space-between;
       gap: 12px;
-      margin-bottom: 25px;
+      margin-bottom: 30px;
     }
 
     .emotion-btn {
       flex: 1;
-      background: var(--card-bg);
-      border: 2px solid #333;
-      border-radius: 16px;
-      padding: 15px 5px;
+      background: linear-gradient(145deg, #252525, #1a1a1a);
+      border: 1px solid #333;
+      border-radius: 20px;
+      padding: 18px 5px;
       cursor: pointer;
       transition: all 0.2s ease;
       display: flex;
       flex-direction: column;
       align-items: center;
+      position: relative;
+      /* 核心立体阴影：下方深色投影 + 内部微弱高光 */
+      box-shadow: 0 6px 0 #000, 0 12px 20px rgba(0,0,0,0.4), inset 0 1px 1px rgba(255,255,255,0.05);
     }
 
-    .emotion-btn:active { transform: scale(0.95); }
+    /* 点击时的物理下压效果 */
+    .emotion-btn:active {
+      transform: translateY(4px);
+      box-shadow: 0 2px 0 #000, 0 5px 10px rgba(0,0,0,0.4);
+    }
 
-    .emotion-icon { font-size: 45px; margin-bottom: 8px; line-height: 1; }
-    .emotion-label { font-size: 13px; font-weight: bold; color: var(--text-main); }
+    .emotion-icon { font-size: 42px; margin-bottom: 8px; filter: drop-shadow(0 3px 3px rgba(0,0,0,0.3)); }
+    .emotion-label { font-size: 13px; font-weight: bold; color: var(--text-muted); }
 
     /* 激活状态样式 */
-    .active-happy { border-color: var(--primary-gold) !important; background: rgba(255, 204, 0, 0.1) !important; }
-    .active-neutral { border-color: var(--neutral-gray) !important; background: rgba(85, 85, 85, 0.1) !important; }
-    .active-unhappy { border-color: var(--error-red) !important; background: rgba(198, 40, 40, 0.1) !important; }
+    .active-happy { border-color: var(--primary-gold) !important; background: rgba(255, 204, 0, 0.05) !important; color: var(--primary-gold); }
+    .active-happy .emotion-label { color: var(--primary-gold); }
+    
+    .active-neutral { border-color: var(--neutral-gray) !important; background: rgba(85, 85, 85, 0.05) !important; }
+    .active-neutral .emotion-label { color: #fff; }
+    
+    .active-unhappy { border-color: var(--error-red) !important; background: rgba(198, 40, 40, 0.05) !important; }
+    .active-unhappy .emotion-label { color: #ff6b6b; }
 
-    /* 反馈表单 */
+    /* 反馈表单立体化 */
     #feedbackForm { 
       display: none; 
       background: var(--card-bg); 
-      padding: 20px; 
-      border-radius: 16px; 
+      padding: 25px; 
+      border-radius: 24px; 
       border: 1px solid #333;
-      margin-top: 10px;
+      margin-top: 15px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+      animation: fadeIn 0.3s ease-out;
     }
 
-    #feedbackTitle { font-weight: bold; margin-bottom: 15px; font-size: 16px; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    #feedbackTitle { font-weight: bold; margin-bottom: 15px; font-size: 16px; color: #eee; }
 
     .star-rating {
       font-size: 38px;
-      margin-bottom: 15px;
+      margin-bottom: 20px;
       color: var(--primary-gold);
       display: flex;
       justify-content: center;
-      gap: 8px;
+      gap: 10px;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
     }
-    .star { cursor: pointer; user-select: none; }
+    .star { cursor: pointer; transition: transform 0.2s; }
+    .star:active { transform: scale(1.2); }
 
     textarea, .email-input { 
       width: 100%; 
-      padding: 14px; 
+      padding: 15px; 
       background: var(--input-bg); 
       color: #fff; 
-      border-radius: 10px; 
-      border: 1px solid #444; 
+      border-radius: 12px; 
+      border: 1px solid #333; 
       box-sizing: border-box;
       font-size: 15px;
-      margin-top: 10px;
-      display: block;
+      margin-top: 12px;
+      box-shadow: inset 0 2px 5px rgba(0,0,0,0.5); /* 内阴影体现下凹感 */
     }
-    textarea { height: 100px; resize: none; }
-    .email-input { margin-bottom: 5px; }
+    textarea:focus, .email-input:focus { border-color: var(--primary-gold); outline: none; }
 
     .submit-btn { 
-      background: var(--primary-gold); 
+      background: linear-gradient(to bottom, var(--primary-gold), var(--primary-gold-dark)); 
       color: #000; 
       width: 100%;
-      padding: 16px;
+      padding: 18px;
       border: none;
-      border-radius: 12px;
+      border-radius: 15px;
       font-size: 17px;
       font-weight: bold;
       cursor: pointer;
-      margin-top: 20px;
+      margin-top: 25px;
+      box-shadow: 0 5px 0 #8a6d00, 0 10px 20px rgba(0,0,0,0.3); /* 3D 按钮厚度 */
+      transition: all 0.1s;
     }
-    .submit-btn:disabled { opacity: 0.5; }
+    .submit-btn:active {
+      transform: translateY(3px);
+      box-shadow: 0 2px 0 #8a6d00, 0 5px 10px rgba(0,0,0,0.3);
+    }
+    .submit-btn:disabled { opacity: 0.6; transform: none; box-shadow: none; }
 
     .message { margin-top: 30px; color: var(--primary-gold); font-size: 18px; display: none; font-weight: bold; }
+
+    /* --- 社交媒体样式（保持原状） --- */
+    .social-footer {
+      margin-top: 40px;
+      padding-top: 25px;
+      border-top: 1px solid #333;
+    }
+    .social-footer p {
+      color: var(--text-muted);
+      font-size: 14px;
+      margin-bottom: 15px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .social-icons {
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+    }
+    .social-link {
+      color: var(--text-main);
+      text-decoration: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: all 0.3s ease;
+    }
+    .social-link i {
+      font-size: 32px;
+      margin-bottom: 8px;
+    }
+    .social-link span {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .social-link:hover { color: var(--primary-gold); }
+    .social-link:hover span { color: var(--primary-gold); }
   </style>
 </head>
 <body>
@@ -170,103 +234,88 @@
   </div>
 
   <div id="msg" class="message"></div>
+
+  <div class="social-footer">
+    <p>Follow us</p>
+    <div class="social-icons">
+      <a href="https://www.instagram.com/asiacitybuffet/" target="_blank" class="social-link">
+        <i class="fab fa-instagram"></i>
+        <span></span>
+      </a>
+      <a href="https://www.facebook.com/asiacitybuffet/?locale=de_DE" target="_blank" class="social-link">
+        <i class="fab fa-facebook"></i>
+        <span></span>
+      </a>
+    </div>
+  </div>
 </div>
 
 <script>
-// --- Supabase 配置 ---
+// 此处保留你原有的脚本逻辑，无需更改
 const SUPABASE_URL = "https://rfbklazetkqomxgscdtj.supabase.co";
 const SUPABASE_KEY = "sb_publishable_AU23TgEjTN62qXzLljpR0A_C43XikLw"; 
 const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let currentRating = 0;
 
-/**
- * 记录事件到 events 表，并带错误反馈
- */
 async function trackEvent(type) {
-    console.log("Attempting to track:", type);
-    const { data, error } = await _supabase.from("events").insert([{ type: type }]);
-    
-    if (error) {
-        console.error("Supabase Error Details:", error);
-        // 如果是因为权限或表不存在，这里会弹窗
-        // 调试完可以把这行删除
-        alert("Datenbank Fehler: " + error.message); 
-    } else {
-        console.log("Track success:", type);
-    }
+    console.log("Tracking:", type);
+    const { error } = await _supabase.from("events").insert([{ type: type }]);
+    if (error) console.error("Tracking error:", error.message);
 }
 
-// 星级设置
 function setRating(n) {
     currentRating = n;
     const stars = document.querySelectorAll('.star');
     stars.forEach((star, index) => {
         star.innerText = (index < n) ? "★" : "☆";
+        star.style.color = (index < n) ? "var(--primary-gold)" : "#555";
     });
 }
 
-// 重置按钮样式
 function resetButtons() {
     document.getElementById('btnHappy').classList.remove('active-happy');
     document.getElementById('btnNeutral').classList.remove('active-neutral');
     document.getElementById('btnUnhappy').classList.remove('active-unhappy');
 }
 
-// --- 点击事件 ---
-
-// 1. 非常满意 (好评)
 async function happyClick() {
-    // 记录点击
     await trackEvent("positive_click");
-
     resetButtons();
     document.getElementById('btnHappy').classList.add('active-happy');
     document.getElementById("feedbackForm").style.display = "none";
-    
     const msg = document.getElementById("msg");
     msg.style.display = "block";
     msg.innerText = "Danke! Weiterleitung zu Google...";
-    
-    // 跳转到 Google 评论页
     setTimeout(() => {
         window.location.href = "https://g.page/r/CeqBvFeF1eW9EBE/review";
     }, 1000);
 }
 
-// 2. 一般般
 async function neutralClick() {
-    // 记录点击
     await trackEvent("neutral_click");
-
     resetButtons();
     document.getElementById('btnNeutral').classList.add('active-neutral');
     openForm("Was hat Ihnen heute gefehlt?");
 }
 
-// 3. 不太好
 async function unhappyClick() {
-    // 记录点击
     await trackEvent("negative_click");
-
     resetButtons();
     document.getElementById('btnUnhappy').classList.add('active-unhappy');
     openForm("Es tut uns leid. Was war nicht gut?");
 }
 
-// 打开内部反馈表单
 function openForm(title) {
     document.getElementById("msg").style.display = "none";
     document.getElementById("feedbackTitle").innerText = title;
     document.getElementById("feedbackForm").style.display = "block";
     setRating(0);
-    
     setTimeout(() => {
         window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-    }, 100);
+    }, 200);
 }
 
-// --- 提交详细反馈 ---
 async function sendFeedback() {
     const message = document.getElementById("message").value.trim();
     const email = document.getElementById("userEmail").value.trim();
@@ -280,13 +329,8 @@ async function sendFeedback() {
     btn.disabled = true;
     btn.innerText = "Wird gesendet...";
 
-    // 1. 存入 feedback 表
     const { error } = await _supabase.from("feedback").insert([
-        { 
-            rating: currentRating, 
-            message: message, 
-            email: email 
-        }
+        { rating: currentRating, message: message, email: email }
     ]);
 
     if (error) {
@@ -294,14 +338,10 @@ async function sendFeedback() {
         btn.disabled = false;
         btn.innerText = "Feedback senden";
     } else {
-        // 2. 存入成功后，在 events 表记录一次“完成提交”
         await trackEvent("feedback_form_submitted");
-
-        // 3. 隐藏所有控件，显示感谢语
         document.getElementById("feedbackForm").style.display = "none";
         document.getElementById("mainOptions").style.display = "none";
         document.querySelector(".subtitle").style.display = "none";
-        
         const msg = document.getElementById("msg");
         msg.style.display = "block";
         msg.innerText = "Vielen Dank! Ihr Feedback wurde sicher gespeichert.";
